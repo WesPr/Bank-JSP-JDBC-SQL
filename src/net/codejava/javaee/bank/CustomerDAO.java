@@ -178,4 +178,71 @@ public class CustomerDAO {
         }
         return customers;
     }
+    
+    ArrayList<Transactions> GetAllTransactions(int id) throws SQLException {
+        ArrayList<Transactions> transactions = new ArrayList<Transactions>();
+        connect();
+        try {
+            try (PreparedStatement findUser = jdbcConnection.prepareStatement(
+                    "SELECT Deposit,Withdraw,Balance "
+                            + "FROM Transactions WHERE ID =?")) {
+            	findUser.setInt(1, id);
+                ResultSet findUserResults = findUser.executeQuery();
+                while (findUserResults.next()) {
+                    Double deposit = findUserResults.getDouble("Deposit");
+                    Double withdrawal = findUserResults.getDouble("Withdraw");     
+                    Double balance = findUserResults.getDouble("Balance");
+                    
+                    Transactions transaction = new Transactions(deposit,withdrawal,balance);
+                    transactions.add(transaction);
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("An error has occurred." + ex.getMessage());
+        }
+        return transactions;
+    }
+    
+    
+    void Deposit(int id, double deposit, double balance) throws SQLException {
+        connect();
+    try (PreparedStatement addDeposit = jdbcConnection.prepareStatement("INSERT INTO Transactions(ID,Deposit,Balance) VALUES(?,?,?)")) {
+        addDeposit.setInt(1, id);
+        addDeposit.setDouble(2, deposit);
+        addDeposit.setDouble(3, balance);
+        addDeposit.executeUpdate();
+        
+    } catch (SQLException ex) {
+		    System.err.println("An error has occurred." + ex.getMessage());
+		}
+    
+    try (PreparedStatement updateBalance = jdbcConnection.prepareStatement(
+            "UPDATE Accounts SET Balance = ? WHERE ID = ?")) {
+        updateBalance.setDouble(1, balance);
+        updateBalance.setInt(2, id);
+        updateBalance.executeUpdate();
+    } catch (SQLException ex) {
+    System.err.println("An error has occurred." + ex.getMessage());
+    }
+    }
+    
+    void Withdraw(int id, double withdraw, double balance) throws SQLException {
+        connect();
+    try (PreparedStatement addDeposit = jdbcConnection.prepareStatement("INSERT INTO Transactions(ID,Withdraw,Balance) VALUES(?,?,?)")) {
+        addDeposit.setInt(1, id);
+        addDeposit.setDouble(2, withdraw);
+        addDeposit.setDouble(3, balance);
+        addDeposit.executeUpdate();
+		} catch (SQLException ex) {
+		    System.err.println("An error has occurred." + ex.getMessage());
+		}
+    try (PreparedStatement updateBalance = jdbcConnection.prepareStatement(
+            "UPDATE Accounts SET Balance = ? WHERE ID = ?")) {
+        updateBalance.setDouble(1, balance);
+        updateBalance.setInt(2, id);
+        updateBalance.executeUpdate();
+    } catch (SQLException ex) {
+    System.err.println("An error has occurred." + ex.getMessage());
+    }
+    }
 }

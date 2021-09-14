@@ -2,6 +2,7 @@ package net.codejava.javaee.bank;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 
 import javax.servlet.RequestDispatcher;
@@ -52,6 +53,18 @@ public class ControllerServlet extends HttpServlet {
 			case "/transact":
 				showTransactForm(request, response);
 				break;
+			case "/depositForm":
+				showDepositForm(request, response);
+				break;
+			case "/withdrawForm":
+				showWithdrawForm(request, response);
+				break;
+			case "/deposit":
+				deposit(request, response);
+				break;
+			case "/withdraw":
+				withdraw(request, response);
+				break;
 			default:
 				listCustomer(request, response);
 				break;
@@ -74,12 +87,31 @@ public class ControllerServlet extends HttpServlet {
 		RequestDispatcher dispatcher = request.getRequestDispatcher("CustomerForm.jsp");
 		dispatcher.forward(request, response);
 	}
+	
+	private void showDepositForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		int id = Integer.parseInt(request.getParameter("id"));
+		request.setAttribute("id", id);
+		RequestDispatcher dispatcher = request.getRequestDispatcher("DepositForm.jsp");
+		dispatcher.forward(request, response);
+	}
+	
+	private void showWithdrawForm(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		int id = Integer.parseInt(request.getParameter("id"));
+		request.setAttribute("id", id);
+		RequestDispatcher dispatcher = request.getRequestDispatcher("WithdrawalForm.jsp");
+		dispatcher.forward(request, response);
+	}
 
 	private void showTransactForm(HttpServletRequest request, HttpServletResponse response)
 			throws SQLException, ServletException, IOException {
 		int id = Integer.parseInt(request.getParameter("id"));
 		Customer existingCustomer = customerDAO.GetAccount(id);
-		request.setAttribute("customer", existingCustomer);
+		request.setAttribute("existingCustomer", existingCustomer);
+		List<Transactions> listTransactions = customerDAO.GetAllTransactions(id);
+		Collections.reverse(listTransactions);
+		request.setAttribute("listTransactions", listTransactions);
 		RequestDispatcher dispatcher = request.getRequestDispatcher("TransactForm.jsp");
 		dispatcher.forward(request, response);
 
@@ -101,6 +133,26 @@ public class ControllerServlet extends HttpServlet {
 		customerDAO.DeleteAccount(id);
 		response.sendRedirect("list");
 
+	}
+	
+	private void deposit(HttpServletRequest request, HttpServletResponse response) 
+			throws SQLException, IOException {
+		int id = Integer.parseInt(request.getParameter("id"));
+		Double deposit = Double.parseDouble(request.getParameter("deposited")); 
+		Customer existingCustomer = customerDAO.GetAccount(id);
+		Double balance = existingCustomer.accBalance() + deposit;
+		customerDAO.Deposit(id, deposit, balance);
+		response.sendRedirect("transact?id="+id);
+	}
+	
+	private void withdraw(HttpServletRequest request, HttpServletResponse response) 
+			throws SQLException, IOException {
+		int id = Integer.parseInt(request.getParameter("id"));
+		Double withdraw = Double.parseDouble(request.getParameter("withdrew")); 
+		Customer existingCustomer = customerDAO.GetAccount(id);
+		Double balance = existingCustomer.accBalance() - withdraw; 
+		customerDAO.Withdraw(id, withdraw, balance);
+		response.sendRedirect("transact?id="+id);
 	}
 
 }
